@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Network Troubleshooter - IT Support Tool</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #0d1117; color: #e6edf3; min-height: 100vh; }
+
+    header {
+      background: #161b22;
+      border-bottom: 1px solid #30363d;
+      padding: 18px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header h1 { font-size: 1.2rem; color: #58a6ff; }
+    header span { font-size: 0.8rem; color: #8b949e; }
+
+    .container { max-width: 780px; margin: 40px auto; padding: 0 20px; }
+
+    .intro {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      padding: 24px;
+      margin-bottom: 28px;
+    }
+    .intro h2 { color: #58a6ff; margin-bottom: 8px; font-size: 1rem; }
+    .intro p { color: #8b949e; font-size: 0.88rem; line-height: 1.6; }
+
+    .problem-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+    .problem-btn {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 18px;
+      cursor: pointer;
+      text-align: left;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .problem-btn:hover { border-color: #58a6ff; background: #1c2128; }
+    .problem-btn.active { border-color: #58a6ff; background: #1c2128; }
+    .problem-btn .icon { font-size: 1.6rem; margin-bottom: 8px; display: block; }
+    .problem-btn .title { font-size: 0.9rem; font-weight: 600; color: #e6edf3; }
+    .problem-btn .desc { font-size: 0.78rem; color: #8b949e; margin-top: 4px; }
+
+    .step-card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      padding: 24px;
+      margin-bottom: 16px;
+      display: none;
+    }
+    .step-card.visible { display: block; animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    .step-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .step-num {
+      background: #58a6ff;
+      color: #0d1117;
+      font-weight: 700;
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.85rem;
+      flex-shrink: 0;
+    }
+    .step-header h3 { font-size: 0.95rem; color: #e6edf3; }
+
+    .step-body { font-size: 0.875rem; color: #8b949e; line-height: 1.7; }
+    .step-body code {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-family: monospace;
+      color: #79c0ff;
+      font-size: 0.85rem;
+    }
+    .step-body .cmd-block {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-left: 3px solid #58a6ff;
+      border-radius: 6px;
+      padding: 12px 16px;
+      margin: 10px 0;
+      font-family: monospace;
+      color: #79c0ff;
+      font-size: 0.85rem;
+    }
+
+    .question-box {
+      background: #1c2128;
+      border: 1px solid #388bfd40;
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 16px;
+    }
+    .question-box p { font-size: 0.88rem; color: #e6edf3; margin-bottom: 12px; }
+    .q-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+    .q-btn {
+      padding: 7px 18px;
+      border-radius: 6px;
+      border: 1px solid #30363d;
+      background: #161b22;
+      color: #e6edf3;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.15s;
+    }
+    .q-btn:hover { border-color: #58a6ff; color: #58a6ff; }
+    .q-btn.yes { border-color: #3fb950; color: #3fb950; }
+    .q-btn.no { border-color: #f85149; color: #f85149; }
+
+    .resolved-box {
+      background: #1c2128;
+      border: 1px solid #3fb95040;
+      border-radius: 8px;
+      padding: 20px;
+      margin-top: 16px;
+      text-align: center;
+      display: none;
+    }
+    .resolved-box.visible { display: block; }
+    .resolved-box .check { font-size: 2rem; margin-bottom: 8px; }
+    .resolved-box p { color: #3fb950; font-size: 0.9rem; }
+
+    .escalate-box {
+      background: #1c2128;
+      border: 1px solid #f8514940;
+      border-radius: 8px;
+      padding: 20px;
+      margin-top: 16px;
+      display: none;
+    }
+    .escalate-box.visible { display: block; }
+    .escalate-box h4 { color: #f85149; margin-bottom: 8px; font-size: 0.9rem; }
+    .escalate-box p { color: #8b949e; font-size: 0.82rem; line-height: 1.6; }
+
+    .reset-btn {
+      background: transparent;
+      border: 1px solid #30363d;
+      color: #8b949e;
+      padding: 8px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      margin-top: 20px;
+      display: none;
+    }
+    .reset-btn.visible { display: inline-block; }
+    .reset-btn:hover { border-color: #58a6ff; color: #58a6ff; }
+
+    .tag {
+      display: inline-block;
+      background: #388bfd20;
+      color: #58a6ff;
+      font-size: 0.72rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+      margin-bottom: 12px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🔧 Network Troubleshooter</h1>
+  <span>IT Support Tool · FelipeMalpicaTI</span>
+</header>
+
+<div class="container">
+
+  <div class="intro">
+    <h2>Interactive Network Diagnostic Tool</h2>
+    <p>Select the issue the user is reporting. The tool will guide you through a step-by-step troubleshooting process used in IT Support environments.</p>
+  </div>
+
+  <div class="problem-grid">
+    <button class="problem-btn" onclick="startFlow('nointernet')">
+      <span class="icon">🌐</span>
+      <div class="title">No Internet Access</div>
+      <div class="desc">User cannot browse or connect</div>
+    </button>
+    <button class="problem-btn" onclick="startFlow('slownet')">
+      <span class="icon">🐢</span>
+      <div class="title">Slow Connection</div>
+      <div class="desc">Pages load slowly or timeout</div>
+    </button>
+    <button class="problem-btn" onclick="startFlow('vpn')">
+      <span class="icon">🔒</span>
+      <div class="title">VPN Not Connecting</div>
+      <div class="desc">Cannot connect to company VPN</div>
+    </button>
+    <button class="problem-btn" onclick="startFlow('wifi')">
+      <span class="icon">📶</span>
+      <div class="title">WiFi Drops</div>
+      <div class="desc">Connection drops intermittently</div>
+    </button>
+  </div>
+
+  <div id="flow-container"></div>
+  <button class="reset-btn" id="reset-btn" onclick="resetFlow()">← Start Over</button>
+
+</div>
+
+<script>
+const flows = {
+  nointernet: [
+    {
+      title: "Check physical connection",
+      body: `Ask the user: Is the device connected via cable or WiFi?
+      <div class='cmd-block'>ping 8.8.8.8</div>
+      Run this command on the affected machine. If you get "Request timed out", proceed to next step.`,
+      question: "Does the ping respond?",
+      yes: "resolved",
+      no: "next"
+    },
+    {
+      title: "Check IP configuration",
+      body: `The device may have an invalid IP. Run:
+      <div class='cmd-block'>ipconfig /all</div>
+      Look for a valid IPv4 address (should NOT be 169.254.x.x — that means APIPA, no DHCP).`,
+      question: "Is the IP address valid (not 169.254.x.x)?",
+      yes: "next",
+      no: "renewip"
+    },
+    {
+      title: "Renew IP address",
+      body: `Run the following commands in order:
+      <div class='cmd-block'>ipconfig /release<br>ipconfig /flushdns<br>ipconfig /renew</div>
+      Wait 30 seconds, then test the connection again.`,
+      question: "Did the connection restore after renewing?",
+      yes: "resolved",
+      no: "escalate"
+    }
+  ],
+  slownet: [
+    {
+      title: "Run a speed test",
+      body: `Ask the user to go to <code>speedtest.net</code> and run a test.
+      Compare results with the contracted plan speed. If below 50% of expected speed, continue.`,
+      question: "Is the speed significantly below normal?",
+      yes: "next",
+      no: "resolved"
+    },
+    {
+      title: "Check for bandwidth usage",
+      body: `Open Task Manager → Performance → Open Resource Monitor → Network tab.
+      Look for processes consuming high bandwidth (downloads, backups, streaming).
+      <div class='cmd-block'>netstat -b</div>`,
+      question: "Found a process consuming high bandwidth?",
+      yes: "resolved",
+      no: "next"
+    },
+    {
+      title: "Check router/switch",
+      body: `Ask the user to restart the router: unplug power, wait 30 seconds, plug back in.
+      If on corporate network, check if other users on the same switch are affected.`,
+      question: "Did speed improve after restart?",
+      yes: "resolved",
+      no: "escalate"
+    }
+  ],
+  vpn: [
+    {
+      title: "Verify internet connectivity first",
+      body: `VPN requires a working internet connection. Test basic connectivity:
+      <div class='cmd-block'>ping 8.8.8.8</div>
+      Also verify the VPN client software is up to date.`,
+      question: "Does the user have internet without VPN?",
+      yes: "next",
+      no: "escalate"
+    },
+    {
+      title: "Check VPN credentials and server",
+      body: `Ask the user to verify:
+      <br>• Username and password are correct
+      <br>• The VPN server address hasn't changed
+      <br>• Check if the account is locked: <code>Account Settings → Security</code>`,
+      question: "Are credentials correct and account active?",
+      yes: "next",
+      no: "resolved"
+    },
+    {
+      title: "Reinstall VPN client",
+      body: `Uninstall the VPN client completely, restart the machine, then reinstall the latest version from the official source.
+      <div class='cmd-block'>Control Panel → Programs → Uninstall VPN Client</div>`,
+      question: "Did reinstalling fix the issue?",
+      yes: "resolved",
+      no: "escalate"
+    }
+  ],
+  wifi: [
+    {
+      title: "Identify drop pattern",
+      body: `Ask the user: How often does it drop? Is it near a specific time or location?
+      Check signal strength: look at WiFi icon — fewer bars = weak signal.
+      <div class='cmd-block'>netsh wlan show interfaces</div>`,
+      question: "Is the signal strength below 50%?",
+      yes: "next",
+      no: "next"
+    },
+    {
+      title: "Update WiFi driver",
+      body: `Outdated drivers cause frequent disconnections.
+      <div class='cmd-block'>Device Manager → Network Adapters → Right click → Update driver</div>
+      Alternatively, download the latest driver from the manufacturer's website.`,
+      question: "Did updating the driver fix the drops?",
+      yes: "resolved",
+      no: "next"
+    },
+    {
+      title: "Change power management settings",
+      body: `Windows may turn off the WiFi adapter to save power. Disable this:
+      <div class='cmd-block'>Device Manager → Network Adapters → Properties → Power Management → Uncheck "Allow the computer to turn off this device to save power"</div>`,
+      question: "Did this stop the disconnections?",
+      yes: "resolved",
+      no: "escalate"
+    }
+  ]
+};
+
+let currentFlow = null;
+let currentStep = 0;
+
+function startFlow(type) {
+  document.querySelectorAll('.problem-btn').forEach(b => b.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  currentFlow = type;
+  currentStep = 0;
+  document.getElementById('flow-container').innerHTML = '';
+  document.getElementById('reset-btn').classList.add('visible');
+  showStep(0);
+}
+
+function showStep(index) {
+  const flow = flows[currentFlow];
+  if (index >= flow.length) { showEscalate(); return; }
+  const step = flow[index];
+  const card = document.createElement('div');
+  card.className = 'step-card visible';
+  card.id = `step-${index}`;
+  card.innerHTML = `
+    <span class="tag">Step ${index + 1} of ${flow.length}</span>
+    <div class="step-header">
+      <div class="step-num">${index + 1}</div>
+      <h3>${step.title}</h3>
+    </div>
+    <div class="step-body">${step.body}</div>
+    <div class="question-box">
+      <p>❓ ${step.question}</p>
+      <div class="q-btns">
+        <button class="q-btn yes" onclick="handleAnswer(${index}, true)">✓ Yes — Fixed</button>
+        <button class="q-btn no" onclick="handleAnswer(${index}, false)">✗ No — Still happening</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('flow-container').appendChild(card);
+  card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function handleAnswer(index, yes) {
+  const flow = flows[currentFlow];
+  const step = flow[index];
+  const card = document.getElementById(`step-${index}`);
+  card.querySelector('.question-box').style.display = 'none';
+
+  if (yes && step.yes === 'resolved') { showResolved(card); return; }
+  if (!yes && step.no === 'escalate') { showEscalate(); return; }
+  if (yes && step.yes === 'renewip') { currentStep = 2; showStep(2); return; }
+  showStep(index + 1);
+}
+
+function showResolved(card) {
+  const box = document.createElement('div');
+  box.className = 'resolved-box visible';
+  box.innerHTML = `<div class="check">✅</div><p><strong>Issue Resolved!</strong><br>Document the solution in the ticket and close it.</p>`;
+  card.appendChild(box);
+}
+
+function showEscalate() {
+  const container = document.getElementById('flow-container');
+  const box = document.createElement('div');
+  box.className = 'escalate-box visible';
+  box.innerHTML = `
+    <h4>⚠️ Escalate to N2 Support</h4>
+    <p>Basic troubleshooting steps have been completed without resolution. Document all steps taken and escalate the ticket to the next level of support (N2/N3) with full details of what was tested.</p>
+  `;
+  container.appendChild(box);
+  box.scrollIntoView({ behavior: 'smooth' });
+}
+
+function resetFlow() {
+  currentFlow = null;
+  currentStep = 0;
+  document.getElementById('flow-container').innerHTML = '';
+  document.getElementById('reset-btn').classList.remove('visible');
+  document.querySelectorAll('.problem-btn').forEach(b => b.classList.remove('active'));
+}
+</script>
+</body>
+</html>
